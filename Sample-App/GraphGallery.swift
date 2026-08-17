@@ -184,6 +184,7 @@ struct FSAContainerView: View {
                         AnyView(FSANodeView(state: state))
                     }
                     transitionSymbolOverlay(offset: offset)
+                    selfLoopOverlay(offset: offset)
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
                 .animation(.easeInOut(duration: 0.2), value: offset)
@@ -197,18 +198,25 @@ struct FSAContainerView: View {
     /// mapping the route's FFI ids back to the original `FSAState`s via
     /// `coordinator.nodes` — no change to the shared flattener/coordinator
     /// needed for this.
+    ///
+    /// Prefers `route.labelPosition` — the engine's own obstacle-free
+    /// placement, computed from the `labelWidth`/`labelHeight` every edge
+    /// gets in `FSAFlattener.flatten()` — over eyeballing a point from the
+    /// polyline/curve. Falls back to the old midpoint heuristic only if a
+    /// route somehow lacks one (e.g. label dimensions weren't supplied).
     private func transitionSymbolOverlay(offset: CGSize) -> some View {
         let byId = Dictionary(uniqueKeysWithValues: coordinator.nodes.map { ($0.id, $0.source) })
         return ForEach(coordinator.routes) { route in
             if let from = byId[route.from], let to = byId[route.to] {
                 let matching = from.transitions.filter { $0.target === to }.map(\.symbol)
                 let symbolText = matching.joined(separator: ", ")
-                if !symbolText.isEmpty, let mid = route.points.dropFirst(route.points.count / 2).first {
+                let labelPoint = route.labelPosition ?? route.points.dropFirst(route.points.count / 2).first
+                if !symbolText.isEmpty, let point = labelPoint {
                     Text(symbolText)
                         .font(.caption2.monospaced())
                         .padding(2)
                         .background(.background, in: RoundedRectangle(cornerRadius: 3))
-                        .position(x: mid.x + offset.width, y: mid.y + offset.height)
+                        .position(x: point.x + offset.width, y: point.y + offset.height)
                 }
             }
         }
@@ -219,7 +227,12 @@ struct FSAContainerView: View {
     /// and never appear in `coordinator.routes` — they come back
     /// separately as `coordinator.selfLoops`. Draw a small loop glyph
     /// above each node that has one, labeled with its symbol(s).
-    private var selfLoopOverlay: some View {
+    ///
+    /// Takes the same placement `offset` as `transitionSymbolOverlay` and
+    /// applies it the same way — these glyphs are positioned from raw
+    /// node coordinates, so without it they'd drift out of alignment with
+    /// the (offset) graph as soon as `anchor` isn't `.center`.
+    private func selfLoopOverlay(offset: CGSize) -> some View {
         let byId = Dictionary(uniqueKeysWithValues: coordinator.nodes.map { ($0.id, $0) })
         let symbolsById: [UInt64: [String]] = Dictionary(
             grouping: coordinator.selfLoops.compactMap { loop -> (UInt64, String)? in
@@ -240,7 +253,7 @@ struct FSAContainerView: View {
                 }
                 .padding(3)
                 .background(.background, in: RoundedRectangle(cornerRadius: 4))
-                .position(x: node.x, y: node.y - 40)
+                .position(x: node.x + offset.width, y: node.y - 40 + offset.height)
             }
         }
     }
