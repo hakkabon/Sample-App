@@ -52,7 +52,7 @@ struct GSSFlattener: GraphFlattening {
             for predecessor in node.predecessors {
                 let to = ids.id(for: predecessor)
                 // Lay out top-to-bottom in push order (predecessor -> node)
-                ffiEdges.append(FfiEdge(from: to, to: from))
+                ffiEdges.append(FfiEdge(from: to, to: from, labelWidth: 30, labelHeight: 20))
             }
         }
         return (ffiNodes, ffiEdges, lookup)

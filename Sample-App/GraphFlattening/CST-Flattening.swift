@@ -42,7 +42,7 @@ struct SyntaxTreeFlattener: GraphFlattening {
 
             for child in node.children {
                 let childID = ids.id(for: child)
-                ffiEdges.append(FfiEdge(from: id, to: childID))
+                ffiEdges.append(FfiEdge(from: id, to: childID, labelWidth: 30, labelHeight: 20))
                 visit(child)
             }
         }

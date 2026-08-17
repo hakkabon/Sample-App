@@ -84,7 +84,7 @@ struct SPPFFlattener: GraphFlattening {
                 // Recorded unconditionally, even if `child` was already
                 // visited elsewhere — that's what makes the sharing show
                 // up as fan-in in the rendered graph.
-                ffiEdges.append(FfiEdge(from: id, to: childID))
+                ffiEdges.append(FfiEdge(from: id, to: childID, labelWidth: 30, labelHeight: 20))
                 visit(child)
             }
         }

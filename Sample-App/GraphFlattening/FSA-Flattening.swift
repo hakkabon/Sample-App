@@ -55,7 +55,7 @@ struct FSAFlattener: GraphFlattening {
             let from = ids.id(for: state)
             for transition in state.transitions {
                 let to = ids.id(for: transition.target)
-                ffiEdges.append(FfiEdge(from: from, to: to))
+                ffiEdges.append(FfiEdge(from: from, to: to, labelWidth: 30, labelHeight: 20))
             }
         }
 
